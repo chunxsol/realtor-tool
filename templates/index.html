@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Free Listing Description Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-gray-50 flex flex-col">
+    <main class="flex-grow flex items-center justify-center p-6">
+      <div class="w-full max-w-2xl">
+        <div class="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+          <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 text-center">Free Listing Description Generator</h1>
+          <p class="mt-2 text-sm text-gray-500 text-center">Create professional real estate listing descriptions in seconds.</p>
+
+          <form id="generator" class="mt-6 grid gap-4">
+            <div class="grid grid-cols-2 gap-4">
+              <label class="flex flex-col">
+                <span class="text-sm text-gray-600">Bedrooms</span>
+                <input type="number" name="bedrooms" min="0" class="mt-1 px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+              </label>
+              <label class="flex flex-col">
+                <span class="text-sm text-gray-600">Bathrooms</span>
+                <input type="number" step="0.5" name="bathrooms" min="0" class="mt-1 px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+              </label>
+            </div>
+
+            <label class="flex flex-col">
+              <span class="text-sm text-gray-600">City</span>
+              <input type="text" name="city" class="mt-1 px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+            </label>
+
+            <label class="flex flex-col">
+              <span class="text-sm text-gray-600">Key Features</span>
+              <textarea name="key_features" rows="4" placeholder="Pool, Garage, Open floor plan" class="mt-1 px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-300"></textarea>
+            </label>
+
+            <div class="flex items-center gap-4">
+              <button id="generateBtn" type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium py-3 rounded-lg text-lg shadow inline-flex items-center justify-center" aria-live="polite">
+                <svg id="btnSpinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                <span id="btnText">Generate</span>
+              </button>
+            </div>
+
+            <div id="result" class="mt-4 p-4 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 hidden"></div>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <!-- Upsell Card -->
+    <div class="w-full flex items-center justify-center p-4">
+      <div class="w-full max-w-4xl bg-yellow-300 border-l-4 border-yellow-500 rounded-xl shadow-lg p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h3 class="text-lg font-semibold text-yellow-900">Want 50+ Advanced Prompts? (Emails, Social, Scripts)?</h3>
+          <p class="mt-1 text-sm text-yellow-900">Level up your marketing with ready-made prompt packs tailored for realtors.</p>
+        </div>
+        <div class="flex-shrink-0">
+          <a href="www.realtorflowkit.com" target="_blank" rel="noopener noreferrer" class="inline-block bg-yellow-800 hover:bg-yellow-900 text-white font-semibold py-2 px-4 rounded-lg">Get the Realtor Flow Kit</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById('generator');
+      const result = document.getElementById('result');
+
+      const btn = document.getElementById('generateBtn');
+      const spinner = document.getElementById('btnSpinner');
+      const btnText = document.getElementById('btnText');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const payload = {
+          bedrooms: fd.get('bedrooms') || undefined,
+          bathrooms: fd.get('bathrooms') || undefined,
+          city: fd.get('city') || undefined,
+          key_features: fd.get('key_features') ? fd.get('key_features').split(',').map(s=>s.trim()).filter(Boolean) : []
+        };
+
+        // Show loading state
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        btnText.textContent = 'Generating...';
+        result.classList.add('opacity-75');
+
+        try {
+          const res = await fetch('/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          result.textContent = data.description || '';
+          result.classList.remove('hidden');
+        } catch (err) {
+          result.textContent = 'Error generating description.';
+          result.classList.remove('hidden');
+        } finally {
+          // Restore button state
+          spinner.classList.add('hidden');
+          btn.disabled = false;
+          btnText.textContent = 'Generate';
+          result.classList.remove('opacity-75');
+        }
+      });
+    </script>
+  </body>
+</html>
